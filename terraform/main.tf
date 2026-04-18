@@ -55,12 +55,11 @@ resource "aws_lambda_function" "api_lambda" {
   }
 }
 
-# --- 4. API GATEWAY (Mukhya Darwaza) ---
+# API GATEWAY 
 resource "aws_apigatewayv2_api" "http_api" {
   name          = "url-shortener-api"
   protocol_type = "HTTP"
 
-  # Browser se error na aaye uske liye CORS yahan on hai
   cors_configuration {
     allow_origins = ["*"]
     allow_methods = ["POST", "GET", "OPTIONS"]
@@ -73,7 +72,6 @@ resource "aws_apigatewayv2_integration" "lambda_integration" {
   integration_type       = "AWS_PROXY"
   integration_uri        = aws_lambda_function.api_lambda.invoke_arn
   
-  # YAHI WOH HERO LINE HAI JISSE ERROR THEEK HOGA!
   payload_format_version = "2.0" 
 }
 
