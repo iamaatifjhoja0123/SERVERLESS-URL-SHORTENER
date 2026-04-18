@@ -1,4 +1,4 @@
-name: Deploy Frontend to EC2
+name: Deploy Frontend to EC2 with HTTPS
 
 on:
   push:
@@ -18,10 +18,10 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "index.html,Dockerfile"
-          target: "/home/ec2-user/frontend-app" 
+          source: "index.html,Dockerfile,nginx.conf" 
+          target: "/home/ec2-user/frontend-app"
 
-      - name: SSH into EC2 and Run Docker
+      - name: SSH into EC2, Setup SSL, and Run Docker
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -29,7 +29,26 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd /home/ec2-user/frontend-app
+            
             sudo docker stop url-frontend || true
             sudo docker rm url-frontend || true
+            
+            # 2. Certbot install 
+            if ! command -v certbot &> /dev/null; then
+                sudo yum install augeas-libs -y
+                sudo python3 -m venv /opt/certbot/
+                sudo /opt/certbot/bin/pip install --upgrade pip
+                sudo /opt/certbot/bin/pip install certbot
+                sudo ln -s /opt/certbot/bin/certbot /usr/bin/certbot
+            fi
+            
+            # 3. SSL Certificate generate 
+            sudo certbot certonly --standalone -d urlx.jhoja.tech --non-interactive --agree-tos -m admin@jhoja.tech || true
+            
+            # 4. Nayi Docker image build
             sudo docker build -t my-url-frontend .
-            sudo docker run -d -p 80:80 --name url-frontend my-url-frontend
+            
+            # 5. Naya container run
+            sudo docker run -d -p 80:80 -p 443:443 \
+              -v /etc/letsencrypt:/etc/letsencrypt:ro \
+              --name url-frontend my-url-frontend
