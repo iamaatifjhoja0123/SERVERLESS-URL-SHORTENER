@@ -5,6 +5,8 @@ cat << 'EOF' > README.md
 
 A highly scalable, production-ready URL Shortener built with **AWS Serverless architecture**, managed via **Terraform (IaC)**, and deployed through an automated **CI/CD Pipeline**.
 
+![Top10News Architecture Diagram](diagram.png)
+
 ---
 
 ## 🛠️ Tech Stack
